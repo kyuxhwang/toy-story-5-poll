@@ -55,13 +55,46 @@
     letter-spacing: .14em; text-transform: uppercase;
     color: var(--muted); margin: 26px 4px 10px;
   }
-  .namebox {
-    width: 100%; box-sizing: border-box;
-    background: var(--card); border: 2px solid var(--line); border-radius: 14px;
-    padding: 14px 16px; font: 700 16px 'Nunito', sans-serif;
-    color: var(--ink); outline: none;
+  .profiles {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
   }
-  .namebox:focus { border-color: var(--red); }
+  .profile {
+    position: relative;
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 8px 12px;
+    cursor: pointer; font-family: inherit; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+  }
+  .profile:active { transform: scale(.96); }
+  .profile.on {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent), 0 6px 14px rgba(33,38,58,.10);
+    transform: translateY(-2px);
+  }
+  .p-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(140deg, var(--g1), var(--g2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; position: relative;
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,.12), 0 2px 6px rgba(33,38,58,.15);
+  }
+  .p-check {
+    position: absolute; right: -3px; bottom: -3px;
+    width: 19px; height: 19px; border-radius: 50%;
+    background: var(--ring); color: #fff;
+    font: 800 11px 'Nunito', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--card);
+  }
+  .p-char {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 14px;
+    color: var(--ink); line-height: 1;
+  }
+  .p-fam { font-size: 10.5px; font-weight: 700; color: var(--muted); line-height: 1.2; }
+  .profile.on .p-fam { color: var(--ring); }
 
   .dayhead {
     display: flex; align-items: center; gap: 10px; margin: 18px 2px 8px;
@@ -172,6 +205,41 @@
     text-decoration: underline; cursor: pointer;
   }
 
+  .resultsbtn {
+    width: 100%; margin-top: 16px; box-sizing: border-box;
+    background: var(--ink); color: #fff; border: none;
+    border-radius: 14px; padding: 14px;
+    font: 700 15px 'Fredoka', sans-serif; letter-spacing: .02em;
+    cursor: pointer; box-shadow: 0 4px 0 #131726;
+    transition: transform .1s ease;
+  }
+  .resultsbtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #131726; }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(33,38,58,.55);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .modal {
+    background: var(--sky);
+    border-radius: 22px 22px 0 0;
+    width: 100%; max-width: 480px; max-height: 80vh;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    box-shadow: 0 -8px 30px rgba(33,38,58,.25);
+  }
+  .modal-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .modal-title { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 20px; margin: 0; }
+  .closebtn {
+    background: var(--card); border: 2px solid var(--line);
+    border-radius: 999px; width: 34px; height: 34px;
+    font-weight: 800; font-size: 14px; color: var(--muted); cursor: pointer;
+  }
+
   .editrow {
     display:flex; align-items:center; gap:8px; flex-wrap: wrap;
     background: var(--card); border: 2px solid var(--line);
@@ -222,6 +290,7 @@
     <button class="bigbtn" id="submitbtn">Tap times above, then save</button>
   </div>
 </div>
+<div id="modal"></div>
 
 <script>
 // ============================================================
@@ -259,17 +328,25 @@ const STATUS_META = {
 };
 const STATUS_CYCLE = ["unknown", "good", "limited", "gone"];
 
+// ---------- the three families ----------
+const FAMILIES = [
+  { id: "woody",  char: "Woody",  fam: "Sidney's Family", emoji: "\ud83e\udd20", g1: "#f6c453", g2: "#c9853a", ring: "#b97a2e" },
+  { id: "buzz",   char: "Buzz",   fam: "Meadow's Family", emoji: "\ud83d\ude80", g1: "#7ee0b8", g2: "#6d7cf0", ring: "#5b6ad1" },
+  { id: "jessie", char: "Jessie", fam: "Skylar's Family", emoji: "\ud83d\udc2e", g1: "#fb8a8a", g2: "#e23d44", ring: "#c93238" },
+];
+
 // ---------- state ----------
 let showtimes = DEFAULT_SHOWTIMES.slice();
-let votes = [];          // [{name, times:[], at}]
+let votes = [];          // [{name, emoji, times:[], at}]
 let picked = new Set();
-let name = "";
+let selectedFam = null;  // family id ("woody" | "buzz" | "jessie")
 let editMode = false;
 let draft = [];
 let toast = "", errmsg = "";
 let loaded = false;
 let lastSync = null;
 let refreshTimer = null;
+let resultsOpen = false;
 
 const slugify = s => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 const todayLabel = () => new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -284,25 +361,28 @@ async function fetchAll() {
     showtimes = data.config.showtimes;
   }
   votes = data.votes
-    ? Object.values(data.votes).filter(v => v && v.name && Array.isArray(v.times)).sort((a, b) => (a.at || 0) - (b.at || 0))
+    ? Object.entries(data.votes)
+        .map(([key, v]) => (v && v.name && Array.isArray(v.times)) ? { ...v, key } : null)
+        .filter(Boolean)
+        .sort((a, b) => (a.at || 0) - (b.at || 0))
     : [];
   lastSync = new Date();
   loaded = true;
 }
 
 async function saveVote() {
-  const trimmed = name.trim();
   errmsg = "";
-  if (!trimmed) { errmsg = "Add your family name so the organizer knows who voted."; render(); return; }
+  const fam = FAMILIES.find(f => f.id === selectedFam);
+  if (!fam) { errmsg = "Pick your family profile up top first."; render(); return; }
   if (picked.size === 0) { errmsg = "Tap at least one showtime that works for your crew."; render(); return; }
   setBusy(true);
   try {
-    const vote = { name: trimmed, times: [...picked], at: Date.now() };
-    const res = await fetch(DB + "/votes/" + slugify(trimmed) + ".json", {
+    const vote = { name: fam.fam, char: fam.char, emoji: fam.emoji, times: [...picked], at: Date.now() };
+    const res = await fetch(DB + "/votes/" + fam.id + ".json", {
       method: "PUT", body: JSON.stringify(vote),
     });
     if (!res.ok) throw new Error("save failed");
-    toast = "Saved! Thanks, " + trimmed + " \ud83c\udf9f\ufe0f";
+    toast = "Saved! Thanks, " + fam.fam + " " + fam.emoji;
     setTimeout(() => { toast = ""; render(); }, 4000);
     await fetchAll();
   } catch (e) {
@@ -339,7 +419,7 @@ function setBusy(b) {
 
 // ---------- derived ----------
 const countFor = id => votes.filter(v => v.times.includes(id)).length;
-const namesFor = id => votes.filter(v => v.times.includes(id)).map(v => v.name);
+const namesFor = id => votes.filter(v => v.times.includes(id)).map(v => (v.emoji ? v.emoji + " " : "") + v.name);
 
 // ---------- render ----------
 function render() {
@@ -405,10 +485,19 @@ function render() {
     if (!d) { d = { day: s.day, slots: [] }; days.push(d); }
     d.slots.push(s);
   }
-  const maxCount = Math.max(0, ...showtimes.map(s => countFor(s.id)));
 
   let h = '<p class="section-label">1 \u00b7 Which family is voting?</p>';
-  h += '<input class="namebox" id="famname" placeholder="Family name (e.g. The Riveras)" aria-label="Family name" value="' + esc(name) + '">';
+  h += '<div class="profiles">';
+  for (const f of FAMILIES) {
+    const on = selectedFam === f.id;
+    h += '<button class="profile' + (on ? " on" : "") + '" data-fam="' + f.id + '" aria-pressed="' + on + '"'
+      + ' style="--g1:' + f.g1 + ';--g2:' + f.g2 + ';--ring:' + f.ring + '">'
+      + '<span class="p-avatar">' + f.emoji + (on ? '<span class="p-check">\u2713</span>' : '') + '</span>'
+      + '<span class="p-char">' + esc(f.char) + '</span>'
+      + '<span class="p-fam">' + esc(f.fam) + '</span>'
+      + '</button>';
+  }
+  h += '</div>';
   h += '<p class="section-label">2 \u00b7 Tap every time that works</p>';
 
   for (const d of days) {
@@ -430,27 +519,7 @@ function render() {
   if (toast) h += '<p class="toast">' + esc(toast) + '</p>';
   if (errmsg) h += '<p class="errmsg">' + esc(errmsg) + '</p>';
 
-  h += '<p class="section-label">Results \u00b7 live</p>';
-  if (votes.length === 0) {
-    h += '<p class="empty">No votes yet \u2014 be the first family on the marquee.</p>';
-  } else {
-    for (const s of showtimes) {
-      const c = countFor(s.id);
-      const lead = c > 0 && c === maxCount;
-      const full = c >= TOTAL_FAMILIES;
-      const st = STATUS_META[s.status || "unknown"];
-      h += '<div class="result' + (lead ? " lead" : "") + '">'
-        + '<div class="r-top"><span class="r-when">' + esc(s.day) + ' \u00b7 ' + esc(s.time)
-        + (full ? '<span class="fulltag">\ud83c\udf89 All 3 families</span>' : lead ? '<span class="leadtag">\u2605 Leading</span>' : '')
-        + '</span><span class="r-count"><b>' + c + '</b>/' + TOTAL_FAMILIES + ' families \u00b7 ' + (c * SEATS_PER_FAMILY) + '/9 seats</span></div>'
-        + '<div class="bar"><div style="width:' + Math.min(100, (c / TOTAL_FAMILIES) * 100) + '%"></div></div>'
-        + '<div class="r-names">' + (c === 0 ? "\u2014" : esc(namesFor(s.id).join(", "))) + '</div>'
-        + '<div class="r-status ' + st.cls + '">' + st.label
-        + (s.checkedAt ? '<span class="t-checked"> \u00b7 checked ' + esc(s.checkedAt) + '</span>' : '')
-        + '</div></div>';
-    }
-  }
-  h += '<p class="empty" style="text-align:center">' + votes.length + ' of ' + TOTAL_FAMILIES + ' families have voted. Voting again with the same name updates your picks.</p>';
+  h += '<button class="resultsbtn" id="resultsbtn">\ud83c\udfac See live results \u00b7 ' + votes.length + '/' + TOTAL_FAMILIES + ' families voted</button>';
   h += '<p class="syncline">' + (lastSync ? 'Auto-updates \u00b7 last synced ' + lastSync.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }) : '') + '</p>';
   h += '<div style="text-align:center;margin-top:6px">'
     + '<button class="linkbtn" id="refreshbtn">Refresh now</button>'
@@ -458,12 +527,24 @@ function render() {
 
   app.innerHTML = h;
 
-  document.getElementById("famname").addEventListener("input", e => { name = e.target.value; updateSubmit(); });
+  app.querySelectorAll("[data-fam]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.fam;
+    selectedFam = selectedFam === id ? null : id;
+    // Pre-load this family's previous picks so re-voting is one tap away
+    if (selectedFam) {
+      const prev = votes.find(v => v.key === selectedFam);
+      picked = new Set(prev ? prev.times : []);
+    } else {
+      picked = new Set();
+    }
+    render();
+  }));
   app.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => {
     const id = b.dataset.pick;
     picked.has(id) ? picked.delete(id) : picked.add(id);
     render();
   }));
+  document.getElementById("resultsbtn").addEventListener("click", openResults);
   document.getElementById("refreshbtn").addEventListener("click", refresh);
   document.getElementById("editbtn").addEventListener("click", () => {
     draft = showtimes.map(s => ({ ...s }));
@@ -473,18 +554,71 @@ function render() {
   updateSubmit();
 }
 
+// ---------- results modal ----------
+function openResults() { resultsOpen = true; renderResultsModal(); }
+function closeResults() {
+  resultsOpen = false;
+  document.getElementById("modal").innerHTML = "";
+  document.body.style.overflow = "";
+}
+
+function renderResultsModal() {
+  if (!resultsOpen) return;
+  const modal = document.getElementById("modal");
+  const voted = showtimes
+    .map(s => ({ s, c: countFor(s.id) }))
+    .filter(x => x.c > 0)
+    .sort((a, b) => b.c - a.c);
+  const maxCount = voted.length ? voted[0].c : 0;
+
+  let h = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="Live results">'
+    + '<div class="modal-head"><h2 class="modal-title">Live results</h2>'
+    + '<button class="closebtn" id="closemodal" aria-label="Close results">\u2715</button></div>';
+
+  if (voted.length === 0) {
+    h += '<p class="empty" style="text-align:center;padding:20px 0">No votes yet \u2014 be the first family on the marquee.</p>';
+  } else {
+    for (const { s, c } of voted) {
+      const lead = c === maxCount;
+      const full = c >= TOTAL_FAMILIES;
+      const st = STATUS_META[s.status || "unknown"];
+      h += '<div class="result' + (lead ? " lead" : "") + '">'
+        + '<div class="r-top"><span class="r-when">' + esc(s.day) + ' \u00b7 ' + esc(s.time)
+        + (full ? '<span class="fulltag">\ud83c\udf89 All 3 families</span>' : lead ? '<span class="leadtag">\u2605 Leading</span>' : '')
+        + '</span><span class="r-count"><b>' + c + '</b>/' + TOTAL_FAMILIES + ' families \u00b7 ' + (c * SEATS_PER_FAMILY) + '/9 seats</span></div>'
+        + '<div class="bar"><div style="width:' + Math.min(100, (c / TOTAL_FAMILIES) * 100) + '%"></div></div>'
+        + '<div class="r-names">' + esc(namesFor(s.id).join(", ")) + '</div>'
+        + '<div class="r-status ' + st.cls + '">' + st.label
+        + (s.checkedAt ? '<span class="t-checked"> \u00b7 checked ' + esc(s.checkedAt) + '</span>' : '')
+        + '</div></div>';
+    }
+  }
+  h += '<p class="empty" style="text-align:center">' + votes.length + ' of ' + TOTAL_FAMILIES
+    + ' families have voted. Times with no votes are hidden.</p>';
+  h += '</div></div>';
+
+  modal.innerHTML = h;
+  document.body.style.overflow = "hidden";
+  document.getElementById("closemodal").addEventListener("click", closeResults);
+  document.getElementById("overlay").addEventListener("click", e => { if (e.target.id === "overlay") closeResults(); });
+}
+
 function updateSubmit() {
   const btn = document.getElementById("submitbtn");
   if (!btn) return;
-  btn.textContent = picked.size === 0
-    ? "Tap times above, then save"
-    : "Save my " + picked.size + (picked.size === 1 ? " pick" : " picks") + " \ud83c\udf9f\ufe0f";
+  const fam = FAMILIES.find(f => f.id === selectedFam);
+  btn.textContent = !fam
+    ? "Pick your family above to start"
+    : picked.size === 0
+    ? "Now tap the times that work"
+    : "Save " + fam.char + "'s " + picked.size + (picked.size === 1 ? " pick " : " picks ") + fam.emoji;
 }
 
 async function refresh() {
   try {
     await fetchAll();
     if (!editMode) render();
+    if (resultsOpen) renderResultsModal();
   } catch (e) {
     if (!loaded) {
       document.getElementById("app").innerHTML =
@@ -492,6 +626,8 @@ async function refresh() {
     }
   }
 }
+
+document.addEventListener("keydown", e => { if (e.key === "Escape" && resultsOpen) closeResults(); });
 
 document.getElementById("submitbtn").addEventListener("click", saveVote);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
