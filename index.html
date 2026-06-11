@@ -392,6 +392,25 @@ async function saveVote() {
   render();
 }
 
+async function cleanupOldVotes() {
+  const strays = votes.filter(v => !FAMILIES.some(f => f.id === v.key));
+  if (!strays.length) return;
+  if (!confirm("Delete " + strays.length + " old vote(s): " + strays.map(v => v.name).join(", ") + "? This can't be undone.")) return;
+  errmsg = "";
+  try {
+    for (const v of strays) {
+      const res = await fetch(DB + "/votes/" + encodeURIComponent(v.key) + ".json", { method: "DELETE" });
+      if (!res.ok) throw new Error("delete failed");
+    }
+    toast = "Old votes removed \u2014 counts are clean.";
+    setTimeout(() => { toast = ""; render(); }, 4000);
+    await fetchAll();
+  } catch (e) {
+    errmsg = "Couldn't delete old votes. Try again.";
+  }
+  render();
+}
+
 async function saveConfig() {
   setBusy(true);
   errmsg = "";
@@ -451,6 +470,15 @@ function render() {
     h += '<div class="editactions">'
       + '<button class="savebtn" id="savecfg">Save for everyone</button>'
       + '<button class="cancelbtn" id="cancelcfg">Cancel</button></div>';
+
+    const strays = votes.filter(v => !FAMILIES.some(f => f.id === v.key));
+    if (strays.length) {
+      h += '<p class="section-label">Database cleanup</p>'
+        + '<p class="empty" style="margin-top:0">These votes were cast before family profiles existed and are double-counting: <b>'
+        + esc(strays.map(v => v.name).join(", "))
+        + '</b>. Make sure each family\u2019s picks have been re-saved under their profile, then remove the old entries.</p>'
+        + '<button class="cancelbtn" id="cleanbtn" style="width:100%;box-sizing:border-box;color:var(--red-dark);border-color:#f3c4c6">Delete ' + strays.length + ' old vote' + (strays.length === 1 ? "" : "s") + '</button>';
+    }
     if (errmsg) h += '<p class="errmsg">' + esc(errmsg) + '</p>';
     app.innerHTML = h;
 
@@ -474,6 +502,8 @@ function render() {
     });
     document.getElementById("savecfg").addEventListener("click", saveConfig);
     document.getElementById("cancelcfg").addEventListener("click", () => { editMode = false; render(); });
+    const cleanBtn = document.getElementById("cleanbtn");
+    if (cleanBtn) cleanBtn.addEventListener("click", cleanupOldVotes);
     return;
   }
 
