@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Toy Story 5 · Showtime Poll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #21263a; --sky: #e9f2fc; --card: #ffffff;
+    --red: #e5484d; --red-dark: #c63a3f; --sun: #ffc53d;
+    --green: #2f9e68; --amber: #b97900; --line: #d7e3f0; --muted: #6b7690;
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 8%, #ffffff 0 14px, transparent 15px),
+      radial-gradient(circle at 85% 20%, #ffffff 0 10px, transparent 11px),
+      var(--sky);
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    padding: 20px 14px 110px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  .marquee {
+    background: var(--ink); border-radius: 18px;
+    padding: 20px 18px 18px; color: #fff; text-align: center;
+    box-shadow: 0 6px 0 #131726; position: relative; overflow: hidden;
+  }
+  .marquee::before {
+    content: ''; position: absolute; inset: 8px;
+    border: 2px dashed rgba(255,255,255,.25); border-radius: 12px;
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 11px;
+    letter-spacing: .22em; text-transform: uppercase;
+    color: var(--sun); margin: 0 0 6px;
+  }
+  h1 { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 30px; line-height: 1.05; margin: 0 0 6px; }
+  .venue { font-size: 13px; font-weight: 600; color: #cdd6ea; margin: 0; }
+  .format { font-size: 12px; font-weight: 700; color: #9aa6c4; margin: 4px 0 0; }
+  .seatnote {
+    margin: 10px auto 0; display: inline-block;
+    background: rgba(255,197,61,.15); color: var(--sun);
+    border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  }
+
+  .section-label {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); margin: 26px 4px 10px;
+  }
+  .namebox {
+    width: 100%; box-sizing: border-box;
+    background: var(--card); border: 2px solid var(--line); border-radius: 14px;
+    padding: 14px 16px; font: 700 16px 'Nunito', sans-serif;
+    color: var(--ink); outline: none;
+  }
+  .namebox:focus { border-color: var(--red); }
+
+  .dayhead {
+    display: flex; align-items: center; gap: 10px; margin: 18px 2px 8px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px;
+  }
+  .dayhead::after { content:''; flex:1; height:2px; background: var(--line); border-radius:2px; }
+
+  .ticket {
+    position: relative; width: 100%; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 2px solid var(--line); border-radius: 14px;
+    padding: 12px 16px 12px 20px; margin-bottom: 10px;
+    cursor: pointer; font-family: inherit; text-align: left;
+    transition: transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .ticket::before, .ticket::after {
+    content: ''; position: absolute; top: 50%;
+    width: 16px; height: 16px; background: var(--sky);
+    border: 2px solid var(--line); border-radius: 50%;
+    transform: translateY(-50%); transition: border-color .12s ease;
+  }
+  .ticket::before { left: -10px; }
+  .ticket::after { right: -10px; }
+  .ticket:active { transform: scale(.98); }
+  .ticket.on { background: #fff3f3; border-color: var(--red); }
+  .ticket.on::before, .ticket.on::after { border-color: var(--red); }
+  .t-main { flex: 1; min-width: 0; }
+  .t-time { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 19px; font-variant-numeric: tabular-nums; }
+  .t-deal {
+    display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 800;
+    background: #e7f6ee; color: var(--green); border-radius: 999px;
+    padding: 2px 7px; vertical-align: 3px; letter-spacing: .04em;
+  }
+  .t-status { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 800; }
+  .st-good { color: var(--green); }
+  .st-limited { color: var(--amber); }
+  .st-gone { color: var(--red-dark); }
+  .st-unknown { color: var(--muted); font-weight: 600; }
+  .t-checked { font-weight: 600; color: var(--muted); }
+  .t-stub {
+    border-left: 2px dashed var(--line); padding-left: 14px; margin-left: 12px;
+    min-width: 84px; text-align: center; font-size: 12px; font-weight: 800;
+    color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+    align-self: stretch; display: flex; align-items: center; justify-content: center;
+  }
+  .ticket.on .t-stub { color: var(--red); border-color: rgba(229,72,77,.4); }
+  .stamp {
+    display:inline-block; transform: rotate(-6deg);
+    border: 2px solid var(--red); border-radius: 6px;
+    padding: 2px 7px; font-weight: 800;
+  }
+
+  .submitbar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(transparent, var(--sky) 30%);
+    padding: 18px 14px 16px;
+  }
+  .submitbar .wrap { display:flex; gap:10px; align-items:center; }
+  .bigbtn {
+    flex: 1; background: var(--red); color: #fff; border: none;
+    border-radius: 16px; padding: 16px;
+    font: 700 17px 'Fredoka', sans-serif; letter-spacing: .02em;
+    cursor: pointer; box-shadow: 0 4px 0 var(--red-dark);
+    transition: transform .1s ease;
+  }
+  .bigbtn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--red-dark); }
+  .bigbtn:disabled { opacity:.55; box-shadow:none; cursor: default; }
+
+  .toast {
+    background: var(--green); color:#fff; border-radius: 12px;
+    padding: 10px 14px; font-weight: 800; font-size: 14px;
+    margin: 12px 0 0; text-align:center;
+  }
+  .errmsg {
+    background: #fdecec; color: var(--red-dark); border-radius: 12px;
+    padding: 10px 14px; font-weight: 700; font-size: 14px;
+    margin: 12px 0 0; text-align:center;
+  }
+
+  .result {
+    background: var(--card); border: 2px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .result.lead { border-color: var(--sun); background:#fffaf0; }
+  .r-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .r-when { font-family:'Fredoka',sans-serif; font-weight:600; font-size:15px; }
+  .r-count { font-weight: 800; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .r-count b { color: var(--ink); font-size: 15px; }
+  .leadtag {
+    font-size: 11px; font-weight: 800; background: var(--sun); color: #5c4400;
+    border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px;
+  }
+  .fulltag {
+    font-size: 11px; font-weight: 800; background: #e7f6ee; color: var(--green);
+    border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px;
+  }
+  .bar { height: 8px; background: var(--sky); border-radius: 99px; margin: 8px 0 6px; overflow:hidden; }
+  .bar > div { height:100%; background: var(--red); border-radius:99px; transition: width .3s ease; }
+  .result.lead .bar > div { background: var(--sun); }
+  .r-names { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .r-status { font-size: 12px; font-weight: 800; margin-top: 4px; }
+  .empty { color: var(--muted); font-style: italic; font-size: 14px; padding: 4px; }
+  .syncline { text-align:center; font-size: 12px; color: var(--muted); font-weight: 700; margin-top: 4px; }
+
+  .linkbtn {
+    background:none; border:none; padding:6px 4px;
+    color: var(--muted); font: 700 13px 'Nunito', sans-serif;
+    text-decoration: underline; cursor: pointer;
+  }
+
+  .editrow {
+    display:flex; align-items:center; gap:8px; flex-wrap: wrap;
+    background: var(--card); border: 2px solid var(--line);
+    border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
+    font-weight: 700; font-size: 14px;
+  }
+  .editrow .e-when { flex: 1; min-width: 120px; }
+  .statusbtn { border: none; border-radius: 8px; padding: 6px 10px; font: 800 11px 'Nunito', sans-serif; cursor: pointer; }
+  .statusbtn.st-good { background:#e7f6ee; }
+  .statusbtn.st-limited { background:#fff4dd; }
+  .statusbtn.st-gone { background:#fdecec; }
+  .statusbtn.st-unknown { background: var(--sky); }
+  .delbtn {
+    background:#fdecec; color: var(--red-dark); border:none; border-radius: 8px;
+    width: 30px; height: 30px; font-weight: 800; font-size: 15px; cursor: pointer;
+  }
+  .addrow { display:flex; gap:8px; margin-top: 10px; }
+  .addrow input {
+    box-sizing: border-box; border: 2px solid var(--line); border-radius: 10px;
+    padding: 10px; font: 700 14px 'Nunito', sans-serif;
+    color: var(--ink); outline:none; background: var(--card);
+  }
+  .addrow input:focus { border-color: var(--red); }
+  .addrow .day-in { width: 42%; }
+  .addrow .time-in { flex: 1; }
+  .addbtn { background: var(--ink); color:#fff; border:none; border-radius: 10px; padding: 0 14px; font: 700 14px 'Fredoka', sans-serif; cursor:pointer; }
+  .editactions { display:flex; gap:10px; margin-top: 14px; }
+  .savebtn { flex:1; background: var(--green); color:#fff; border:none; border-radius: 12px; padding: 13px; font: 700 15px 'Fredoka', sans-serif; cursor:pointer; }
+  .cancelbtn { background: var(--card); color: var(--muted); border: 2px solid var(--line); border-radius: 12px; padding: 13px 16px; font: 700 15px 'Fredoka', sans-serif; cursor:pointer; }
+
+  button:focus-visible, input:focus-visible { outline: 3px solid #7aa7e8; outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { .ticket, .bigbtn, .bar > div { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="marquee">
+    <p class="eyebrow">Now Showing · A Parent Poll</p>
+    <h1>Toy Story 5</h1>
+    <p class="venue">AMC Newport Centre 11 · Jersey City</p>
+    <p class="format">Laser at AMC · 2D only (no 3D) · Reserved recliners</p>
+    <span class="seatnote">9 seats · 3 families × 3 · back-middle together</span>
+  </header>
+  <div id="app"><p class="empty" style="text-align:center;margin-top:30px">Loading the marquee…</p></div>
+</div>
+<div class="submitbar" id="submitbar" style="display:none">
+  <div class="wrap">
+    <button class="bigbtn" id="submitbtn">Tap times above, then save</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Firebase Realtime Database (REST API — no SDK, no API key
+// needed while the database is in test mode)
+// ============================================================
+const DB = "https://toy-story-5-poll-default-rtdb.firebaseio.com/poll";
+const SEATS_PER_FAMILY = 3;
+const TOTAL_FAMILIES = 3;
+const REFRESH_MS = 8000;
+
+const DEFAULT_SHOWTIMES = [
+  { id: "thu-300p",  day: "Thu, Jun 18", time: "3:00 PM",  deal: "20% off", status: "unknown", checkedAt: null },
+  { id: "thu-545p",  day: "Thu, Jun 18", time: "5:45 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "thu-830p",  day: "Thu, Jun 18", time: "8:30 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "fri-1200p", day: "Fri, Jun 19", time: "12:00 PM", deal: "20% off", status: "unknown", checkedAt: null },
+  { id: "fri-245p",  day: "Fri, Jun 19", time: "2:45 PM",  deal: "20% off", status: "unknown", checkedAt: null },
+  { id: "fri-530p",  day: "Fri, Jun 19", time: "5:30 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "fri-815p",  day: "Fri, Jun 19", time: "8:15 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "sat-1200p", day: "Sat, Jun 20", time: "12:00 PM", deal: "20% off", status: "unknown", checkedAt: null },
+  { id: "sat-245p",  day: "Sat, Jun 20", time: "2:45 PM",  deal: "20% off", status: "good",    checkedAt: "Jun 10" },
+  { id: "sat-530p",  day: "Sat, Jun 20", time: "5:30 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "sat-815p",  day: "Sat, Jun 20", time: "8:15 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "sun-1200p", day: "Sun, Jun 21", time: "12:00 PM", deal: "20% off", status: "unknown", checkedAt: null },
+  { id: "sun-245p",  day: "Sun, Jun 21", time: "2:45 PM",  deal: "20% off", status: "unknown", checkedAt: null },
+  { id: "sun-530p",  day: "Sun, Jun 21", time: "5:30 PM",  deal: "",        status: "unknown", checkedAt: null },
+  { id: "sun-815p",  day: "Sun, Jun 21", time: "8:15 PM",  deal: "",        status: "unknown", checkedAt: null },
+];
+
+const STATUS_META = {
+  good:    { label: "\u2713 9 together \u00b7 back-middle open", cls: "st-good" },
+  limited: { label: "\u26a0 Filling up \u2014 book soon",        cls: "st-limited" },
+  gone:    { label: "\u2715 Can't sit together anymore",          cls: "st-gone" },
+  unknown: { label: "Seats not checked yet",                      cls: "st-unknown" },
+};
+const STATUS_CYCLE = ["unknown", "good", "limited", "gone"];
+
+// ---------- state ----------
+let showtimes = DEFAULT_SHOWTIMES.slice();
+let votes = [];          // [{name, times:[], at}]
+let picked = new Set();
+let name = "";
+let editMode = false;
+let draft = [];
+let toast = "", errmsg = "";
+let loaded = false;
+let lastSync = null;
+let refreshTimer = null;
+
+const slugify = s => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const todayLabel = () => new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+// ---------- data ----------
+async function fetchAll() {
+  const res = await fetch(DB + ".json", { cache: "no-store" });
+  if (!res.ok) throw new Error("fetch failed " + res.status);
+  const data = (await res.json()) || {};
+  if (data.config && Array.isArray(data.config.showtimes) && data.config.showtimes.length) {
+    showtimes = data.config.showtimes;
+  }
+  votes = data.votes
+    ? Object.values(data.votes).filter(v => v && v.name && Array.isArray(v.times)).sort((a, b) => (a.at || 0) - (b.at || 0))
+    : [];
+  lastSync = new Date();
+  loaded = true;
+}
+
+async function saveVote() {
+  const trimmed = name.trim();
+  errmsg = "";
+  if (!trimmed) { errmsg = "Add your family name so the organizer knows who voted."; render(); return; }
+  if (picked.size === 0) { errmsg = "Tap at least one showtime that works for your crew."; render(); return; }
+  setBusy(true);
+  try {
+    const vote = { name: trimmed, times: [...picked], at: Date.now() };
+    const res = await fetch(DB + "/votes/" + slugify(trimmed) + ".json", {
+      method: "PUT", body: JSON.stringify(vote),
+    });
+    if (!res.ok) throw new Error("save failed");
+    toast = "Saved! Thanks, " + trimmed + " \ud83c\udf9f\ufe0f";
+    setTimeout(() => { toast = ""; render(); }, 4000);
+    await fetchAll();
+  } catch (e) {
+    errmsg = "Couldn't save your vote. Check your connection and try again.";
+  }
+  setBusy(false);
+  render();
+}
+
+async function saveConfig() {
+  setBusy(true);
+  errmsg = "";
+  try {
+    const res = await fetch(DB + "/config.json", {
+      method: "PUT", body: JSON.stringify({ showtimes: draft, updatedAt: Date.now() }),
+    });
+    if (!res.ok) throw new Error("save failed");
+    showtimes = draft;
+    editMode = false;
+    toast = "Showtimes & seat statuses updated for everyone.";
+    setTimeout(() => { toast = ""; render(); }, 4000);
+    await fetchAll();
+  } catch (e) {
+    errmsg = "Couldn't save changes. Try again.";
+  }
+  setBusy(false);
+  render();
+}
+
+function setBusy(b) {
+  const btn = document.getElementById("submitbtn");
+  if (btn) btn.disabled = b;
+}
+
+// ---------- derived ----------
+const countFor = id => votes.filter(v => v.times.includes(id)).length;
+const namesFor = id => votes.filter(v => v.times.includes(id)).map(v => v.name);
+
+// ---------- render ----------
+function render() {
+  const app = document.getElementById("app");
+  const bar = document.getElementById("submitbar");
+
+  if (!loaded) {
+    app.innerHTML = '<p class="empty" style="text-align:center;margin-top:30px">Loading the marquee\u2026</p>';
+    bar.style.display = "none";
+    return;
+  }
+
+  if (editMode) {
+    bar.style.display = "none";
+    let h = '<p class="section-label">Organizer \u00b7 showtimes &amp; seat status</p>';
+    h += '<p class="empty" style="margin-top:0">Check a showtime\u2019s seat map on AMC, then tap its status to cycle: Not checked \u2192 Good \u2192 Filling up \u2192 Gone. The \u201cchecked\u201d date stamps automatically.</p>';
+    draft.forEach((s, i) => {
+      const st = STATUS_META[s.status || "unknown"];
+      h += '<div class="editrow">'
+        + '<span class="e-when">' + esc(s.day) + ' \u00b7 ' + esc(s.time) + '</span>'
+        + '<button class="statusbtn ' + st.cls + '" data-cycle="' + i + '">' + st.label + '</button>'
+        + '<button class="delbtn" data-del="' + i + '" aria-label="Remove">\u2715</button>'
+        + '</div>';
+    });
+    h += '<div class="addrow">'
+      + '<input class="day-in" id="newday" placeholder="Sat, Jun 20" aria-label="Day" value="Sat, Jun 20">'
+      + '<input class="time-in" id="newtime" placeholder="11:00 PM" aria-label="Time">'
+      + '<button class="addbtn" id="addbtn">Add</button></div>';
+    h += '<div class="editactions">'
+      + '<button class="savebtn" id="savecfg">Save for everyone</button>'
+      + '<button class="cancelbtn" id="cancelcfg">Cancel</button></div>';
+    if (errmsg) h += '<p class="errmsg">' + esc(errmsg) + '</p>';
+    app.innerHTML = h;
+
+    app.querySelectorAll("[data-cycle]").forEach(b => b.addEventListener("click", () => {
+      const i = +b.dataset.cycle;
+      const cur = draft[i].status || "unknown";
+      const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur) + 1) % STATUS_CYCLE.length];
+      draft[i] = { ...draft[i], status: next, checkedAt: next === "unknown" ? null : todayLabel() };
+      render();
+    }));
+    app.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => {
+      draft.splice(+b.dataset.del, 1);
+      render();
+    }));
+    document.getElementById("addbtn").addEventListener("click", () => {
+      const d = document.getElementById("newday").value.trim() || "TBD";
+      const t = document.getElementById("newtime").value.trim();
+      if (!t) return;
+      draft.push({ id: slugify(d + "-" + t) + "-" + Date.now().toString(36), day: d, time: t, deal: "", status: "unknown", checkedAt: null });
+      render();
+    });
+    document.getElementById("savecfg").addEventListener("click", saveConfig);
+    document.getElementById("cancelcfg").addEventListener("click", () => { editMode = false; render(); });
+    return;
+  }
+
+  // ----- voting view -----
+  bar.style.display = "block";
+  const days = [];
+  for (const s of showtimes) {
+    let d = days.find(x => x.day === s.day);
+    if (!d) { d = { day: s.day, slots: [] }; days.push(d); }
+    d.slots.push(s);
+  }
+  const maxCount = Math.max(0, ...showtimes.map(s => countFor(s.id)));
+
+  let h = '<p class="section-label">1 \u00b7 Which family is voting?</p>';
+  h += '<input class="namebox" id="famname" placeholder="Family name (e.g. The Riveras)" aria-label="Family name" value="' + esc(name) + '">';
+  h += '<p class="section-label">2 \u00b7 Tap every time that works</p>';
+
+  for (const d of days) {
+    h += '<div class="dayhead">' + esc(d.day) + '</div>';
+    for (const s of d.slots) {
+      const on = picked.has(s.id);
+      const st = STATUS_META[s.status || "unknown"];
+      h += '<button class="ticket' + (on ? " on" : "") + '" data-pick="' + esc(s.id) + '" aria-pressed="' + on + '">'
+        + '<span class="t-main"><span class="t-time">' + esc(s.time) + '</span>'
+        + (s.deal ? '<span class="t-deal">' + esc(s.deal) + '</span>' : '')
+        + '<span class="t-status ' + st.cls + '">' + st.label
+        + (s.checkedAt ? '<span class="t-checked"> \u00b7 checked ' + esc(s.checkedAt) + '</span>' : '')
+        + '</span></span>'
+        + '<span class="t-stub">' + (on ? '<span class="stamp">\u2713 Works</span>' : 'Admit 3') + '</span>'
+        + '</button>';
+    }
+  }
+
+  if (toast) h += '<p class="toast">' + esc(toast) + '</p>';
+  if (errmsg) h += '<p class="errmsg">' + esc(errmsg) + '</p>';
+
+  h += '<p class="section-label">Results \u00b7 live</p>';
+  if (votes.length === 0) {
+    h += '<p class="empty">No votes yet \u2014 be the first family on the marquee.</p>';
+  } else {
+    for (const s of showtimes) {
+      const c = countFor(s.id);
+      const lead = c > 0 && c === maxCount;
+      const full = c >= TOTAL_FAMILIES;
+      const st = STATUS_META[s.status || "unknown"];
+      h += '<div class="result' + (lead ? " lead" : "") + '">'
+        + '<div class="r-top"><span class="r-when">' + esc(s.day) + ' \u00b7 ' + esc(s.time)
+        + (full ? '<span class="fulltag">\ud83c\udf89 All 3 families</span>' : lead ? '<span class="leadtag">\u2605 Leading</span>' : '')
+        + '</span><span class="r-count"><b>' + c + '</b>/' + TOTAL_FAMILIES + ' families \u00b7 ' + (c * SEATS_PER_FAMILY) + '/9 seats</span></div>'
+        + '<div class="bar"><div style="width:' + Math.min(100, (c / TOTAL_FAMILIES) * 100) + '%"></div></div>'
+        + '<div class="r-names">' + (c === 0 ? "\u2014" : esc(namesFor(s.id).join(", "))) + '</div>'
+        + '<div class="r-status ' + st.cls + '">' + st.label
+        + (s.checkedAt ? '<span class="t-checked"> \u00b7 checked ' + esc(s.checkedAt) + '</span>' : '')
+        + '</div></div>';
+    }
+  }
+  h += '<p class="empty" style="text-align:center">' + votes.length + ' of ' + TOTAL_FAMILIES + ' families have voted. Voting again with the same name updates your picks.</p>';
+  h += '<p class="syncline">' + (lastSync ? 'Auto-updates \u00b7 last synced ' + lastSync.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }) : '') + '</p>';
+  h += '<div style="text-align:center;margin-top:6px">'
+    + '<button class="linkbtn" id="refreshbtn">Refresh now</button>'
+    + '<button class="linkbtn" id="editbtn">Organizer: edit times &amp; seat status</button></div>';
+
+  app.innerHTML = h;
+
+  document.getElementById("famname").addEventListener("input", e => { name = e.target.value; updateSubmit(); });
+  app.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.pick;
+    picked.has(id) ? picked.delete(id) : picked.add(id);
+    render();
+  }));
+  document.getElementById("refreshbtn").addEventListener("click", refresh);
+  document.getElementById("editbtn").addEventListener("click", () => {
+    draft = showtimes.map(s => ({ ...s }));
+    editMode = true;
+    render();
+  });
+  updateSubmit();
+}
+
+function updateSubmit() {
+  const btn = document.getElementById("submitbtn");
+  if (!btn) return;
+  btn.textContent = picked.size === 0
+    ? "Tap times above, then save"
+    : "Save my " + picked.size + (picked.size === 1 ? " pick" : " picks") + " \ud83c\udf9f\ufe0f";
+}
+
+async function refresh() {
+  try {
+    await fetchAll();
+    if (!editMode) render();
+  } catch (e) {
+    if (!loaded) {
+      document.getElementById("app").innerHTML =
+        '<p class="errmsg">Couldn\u2019t reach the poll database. Check your connection and reload.</p>';
+    }
+  }
+}
+
+document.getElementById("submitbtn").addEventListener("click", saveVote);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+
+refresh().then(() => render());
+refreshTimer = setInterval(() => { if (!editMode && !document.hidden) refresh(); }, REFRESH_MS);
+</script>
+</body>
+</html>
